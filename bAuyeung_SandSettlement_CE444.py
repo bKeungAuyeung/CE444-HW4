@@ -53,7 +53,14 @@ class Foundation:
         LB_ratio = self.L / self.B
         self.shape_factor = ((1.25*LB_ratio)/(LB_ratio + 0.25))**2
 
+        if self.gwt == 0:
+            self.preconsol_stress = (self.gamma_soil - self.gamma_w)*self.excavation
+        elif 0 < self.gwt < self.excavation:
+            self.preconsol_stress = (self.gamma_soil * self.excavation) - ((self.gamma_w) * ( self.excavation - self.gwt))
+        else:
+            self.preconsol_stress = (self.gamma_soil * self.excavation)
         
-
+        
+        
 
 
