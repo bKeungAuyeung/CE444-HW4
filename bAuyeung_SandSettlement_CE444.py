@@ -23,10 +23,9 @@ class Foundation:
     def influence_depth(self):
         self.influence_depth = self.refL * ((self.B / self.refL)**0.79)
 
-    def soil(self, gamma_soil, gwt, layer_depth, avgN60, excavation = False):
+    def soil(self, gamma_soil, gwt, avgN60, excavation = False):
         self.gamma_soil = gamma_soil # match units specified by the foundation
         self.gwt = gwt
-        self.layer_depth = layer_depth
         self.avgN60 = avgN60
         if excavation == False:
             self.excavation = 'No'
@@ -89,7 +88,6 @@ class Foundation:
     def display_soil(self):
         print(f'Unit System: {self.unit_system}')
         print(f'Unit Weight of Soil: {self.gamma_soil}')
-        print(f'Layer Thickness: {self.layer_depth}')
         print(f'Average N60: {self.avgN60}')
         print(f'Unit Weight of Water: {self.gamma_w}')
         print(f'Groundwater table depth: {self.gwt}')
