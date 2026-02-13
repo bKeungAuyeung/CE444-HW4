@@ -1,5 +1,4 @@
 from math import log10
-from great_tables import GT
 
 class Foundation:
     def __init__(self, B, L, D, H, thickness, point_load, gamma, metric = True):
