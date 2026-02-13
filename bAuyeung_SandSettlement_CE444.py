@@ -1,39 +1,41 @@
 from math import log10
+from great_tables import GT
 
 class Foundation:
-    def __init__(self, B, L, D, H, thickness, load, gamma, metric = True):
+    def __init__(self, B, L, D, H, thickness, point_load, gamma, metric = True):
         self.B = B
         self.L = L
         self.D = D
         self.H = H
         self.thickness = thickness
-        self.load = load 
+        self.load = (point_load / (B*L)) + (gamma*thickness)
         self.gamma = gamma
         if metric == False: # if the system units are in ft
+            self.unit_system = 'ft, psf, pcf' 
             self.Pa = 2117 # psf
             self.refL = 3.28 # ft
             self.gamma_w = 62.4 # pcf
         else:
+            self.unit_system = 'm, kPa, kN/m^3'
             self.Pa = 100 # kPa
             self.refL = 1 # m
             self.gamma_w = 9.81 # kN/m^3
 
+    def influence_depth(self):
+        self.influence_depth = self.refL * ((self.B / self.refL)**0.79)
 
     def soil(self, gamma_soil, gwt, layer_depth, avgN60, excavation = False):
         self.gamma_soil = gamma_soil # match units specified by the foundation
         self.gwt = gwt
         self.layer_depth = layer_depth
         self.avgN60 = avgN60
-        if excavation == True:
-            self.excavation = excavation
+        if excavation == False:
+            self.excavation = 'No'
         else:
-            self.excavation = -1 
+            self.excavation = excavation # excavation must be in specified units
 
-    def influence_depth(self):
-        self.influence_depth = self.refL * ((self.B / self.refL)**0.79)
-
-    def settlement(self, time, deep = False, dynamic = False):
-        if deep == True:
+    def settlement(self, time, deep_soil = False, dynamic = False):
+        if deep_soil == True:
             self.layer_thickness_factor = 1
         else:
             H_infl_ratio = self.H / self.influence_depth
@@ -59,8 +61,55 @@ class Foundation:
             self.preconsol_stress = (self.gamma_soil * self.excavation) - ((self.gamma_w) * ( self.excavation - self.gwt))
         else:
             self.preconsol_stress = (self.gamma_soil * self.excavation)
-        
-        
-        
 
+        if self.preconsol_stress > self.load:
+            #calculate settlement as OCOC
+            print('OCOC')
+            self.settlement = (self.refL) * (0.1*self.shape_factor*self.layer_thickness_factor*self.time_factor*self.comp_index*((self.B/self.refL)**0.7)) * (self.load / (3*self.Pa))
+        elif self.preconsol_stress < self.load:
+            #calculate settlement as OCNC
+            print('OCNC')
+            self.settlement = (self.refL) * (0.1*self.shape_factor*self.layer_thickness_factor*self.time_factor*self.comp_index*((self.B/self.refL)**0.7)) * ((self.load - (2/3*self.preconsol_stress)) / self.Pa)            
+        else:
+            #calculate settlement as NC
+            print('NC')
+            self.settlement = (self.refL )* (0.1*self.shape_factor*self.layer_thickness_factor*self.time_factor*self.comp_index*((self.B/self.refL)**0.7)) * (self.load / self.Pa)
+
+    def display_foundation(self):
+        print(f'Unit System: {self.unit_system}')
+        print(f'Foundation Short Side: {self.B}')
+        print(f'Foundation Long Side: {self.L}')
+        print(f'Foundation Depth: {self.D}')
+        print(f'Foundation Thickness: {self.thickness}')
+        print(f'Stress considered: {self.load}')
+        print(f'Depth from bottom of Foundation to Stiff Layer: {self.H}')
+        print(f'Unit Weight of Foundation: {self.gamma}')
+        print('')
+
+    def display_soil(self):
+        print(f'Unit System: {self.unit_system}')
+        print(f'Unit Weight of Soil: {self.gamma_soil}')
+        print(f'Layer Thickness: {self.layer_depth}')
+        print(f'Average N60: {self.avgN60}')
+        print(f'Unit Weight of Water: {self.gamma_w}')
+        print(f'Groundwater table depth: {self.gwt}')
+        print(f'Excavation is present to depth {self.excavation}')
+        print('')
+
+    def display_factors(self): # display the results
+        print(f'Unit System: {self.unit_system}')
+        print(f'Influence Depth: {self.influence_depth}')
+        print(f'Layer Thickness Factor: {self.layer_thickness_factor}')
+        print(f'Compressibility Index: {self.comp_index}')
+        print(f'Shape Factor: {self.shape_factor}')
+        print(f'Time Factor: {self.time_factor}')
+        print(f'Preconsolidation Stress: {self.preconsol_stress}')
+        print('')
+
+
+    def display_results(self):
+        print(f'Unit System: {self.unit_system}')
+        print(f'Stress considered: {self.load}')
+        print(f'Settlement: {self.settlement}')
+        print('')
 
