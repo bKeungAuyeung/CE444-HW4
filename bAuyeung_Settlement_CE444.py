@@ -1,14 +1,17 @@
 from math import log10
 
 class Foundation:
-    def __init__(self, B, L, D, H, thickness, point_load, gamma, metric = True):
+    def __init__(self, B, L, D, H, surcharge = 'Na',thickness = 'Na', point_load = 'Na', gamma = 'Na', metric = True):
         self.B = B
         self.L = L
         self.D = D
         self.H = H
         self.thickness = thickness
-        self.load = (point_load / (B*L)) + (gamma*thickness)
         self.gamma = gamma
+        if surcharge == 'Na':
+            self.load = (point_load / (B*L)) + (gamma*thickness)
+        else:
+            self.load = surcharge
         if metric == False: # if the system units are in ft
             self.unit_system = 'ft, psf, pcf' 
             self.Pa = 2117 # psf
@@ -32,7 +35,7 @@ class Foundation:
         else:
             self.excavation = excavation # excavation must be in specified units
 
-    def settlement(self, time, deep_soil = False, dynamic = False):
+    def settlement_sand(self, time, deep_soil = False, dynamic = False):
         if deep_soil == True:
             self.layer_thickness_factor = 1
         else:
@@ -73,6 +76,9 @@ class Foundation:
             #calculate settlement as NC
             print('NC Settlement Case')
             self.settlement = (self.refL )* (0.1*self.shape_factor*self.layer_thickness_factor*self.time_factor*self.comp_index*((self.B/self.refL)**0.7)) * (self.load / self.Pa)
+
+    def settlement_clay(self, time, depth_to_base, I0 = -1, I1 = -1, OCR = 1):
+        # 
 
     def display_foundation(self):
         print(f'Unit System: {self.unit_system}')
