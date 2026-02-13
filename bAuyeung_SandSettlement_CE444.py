@@ -42,6 +42,7 @@ class Foundation:
         
         self.comp_index = 1.71 / (self.avgN60**1.4)
 
+        print(f'Time of Settlement Considered: {time} yrs')
         if time == 0:
             self.time_factor = 1
         elif dynamic == True:
@@ -63,15 +64,15 @@ class Foundation:
 
         if self.preconsol_stress > self.load:
             #calculate settlement as OCOC
-            print('OCOC')
+            print('OCOC Settlement Case')
             self.settlement = (self.refL) * (0.1*self.shape_factor*self.layer_thickness_factor*self.time_factor*self.comp_index*((self.B/self.refL)**0.7)) * (self.load / (3*self.Pa))
         elif self.preconsol_stress < self.load:
             #calculate settlement as OCNC
-            print('OCNC')
+            print('OCNC Settlement Case')
             self.settlement = (self.refL) * (0.1*self.shape_factor*self.layer_thickness_factor*self.time_factor*self.comp_index*((self.B/self.refL)**0.7)) * ((self.load - (2/3*self.preconsol_stress)) / self.Pa)            
         else:
             #calculate settlement as NC
-            print('NC')
+            print('NC Settlement Case')
             self.settlement = (self.refL )* (0.1*self.shape_factor*self.layer_thickness_factor*self.time_factor*self.comp_index*((self.B/self.refL)**0.7)) * (self.load / self.Pa)
 
     def display_foundation(self):
