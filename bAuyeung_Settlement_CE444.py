@@ -92,7 +92,7 @@ class Foundation:
             print('NC Settlement Case')
             self.settlement = (self.refL )* (0.1*self.shape_factor*self.layer_thickness_factor*self.time_factor*self.comp_index*((self.B/self.refL)**0.7)) * (self.load / self.Pa)
 
-    def settlement_clay(self, points: np.array, Cc = 'Na', Cr = 'Na', layer_thickness = 'Na', net = True, I0 = 'Na', I1 = 'Na'):
+    def settlement_clay(self, points: np.array, Cc = 'Na', Cr = 'Na', layer_thickness = 'Na', net = True, I0 = 'Na', I1 = 'Na', skempA = 'Na', skempAlpha = 'Na'):
 
         if self.gwt == 0:
             self.excav_load = (self.gamma_soil - self.gamma_w)*self.excavation
@@ -102,9 +102,9 @@ class Foundation:
             self.excav_load = (self.gamma_soil * self.excavation)
         
         if net == True:
-            self.qb = self.load - self.excav_load
+            self.load = self.load - self.excav_load
         else:
-            self.qb = self.load + self.excav_load
+            self.load = self.load + self.excav_load
 
         self.veoStress_clay = np.zeros(len(points))
 
@@ -118,28 +118,27 @@ class Foundation:
         
         self.w_i = I0 * I1  * ((self.load * self.B)/self.Eu) #immediate settlement in clay
         
-        self.vefStress_clay = self.veoStress_clay + ((self.load * self.B * self.L)/((self.B + (points - self.D))*(self.L + (points - self.D))))
+        self.two_to_one_delta = ((self.load * self.B * self.L)/((self.B + (points - self.D))*(self.L + (points - self.D))))
+
+        self.vefStress_clay = self.veoStress_clay + self.two_to_one_delta
 
         self.preconsol_stress = self.OCR_clay * self.veoStress_clay
 
         self.w_c = np.zeros(len(self.preconsol_stress))
-        for index, value in enumerate(self.preconsol_stress):
+        for index in range(len(self.preconsol_stress)):
             if self.OCR_clay == 1 or self.veoStress_clay[index] == self.preconsol_stress[index]:   
-                print('NC Settlement Case')
-                self.w_c[index] = (layer_thickness/(1 + self.e0)) * Cc * np.log10(self.vefStress_clay[index]/self.veoStress_clay[index])
+                print(f'Sublayer {index+1}: NC Settlement Case')
+                self.w_c[index] = (layer_thickness/(1 + self.e0)) * Cc * log10(self.vefStress_clay[index]/self.veoStress_clay[index])
             elif self.veoStress_clay[index] < self.vefStress_clay[index] < self.preconsol_stress[index]:
-                print('OCOC Settlement Case')
-                self.w_c[index] = (layer_thickness/(1 + self.e0)) * Cr * np.log10(self.vefStress_clay[index]/self.veoStress_clay[index])
+                print(f'Sublayer {index+1}: OCOC Settlement Case')
+                self.w_c[index] = (layer_thickness/(1 + self.e0)) * Cr * (log10(self.vefStress_clay[index]/self.veoStress_clay[index]))
             else:
-                print('OCNC Settlement Case')
-                self.w_c[index] = (layer_thickness/(1 + self.e0)) * (((Cr * (np.log10(self.preconsol_stress[index]/self.veoStress_clay[index]))) + ((Cc * (np.log10(self.vefStress_clay[index]/self.preconsol_stress[index]))))))
-        print('')
-        print('Immediate Settlement: ', self.w_i)
-        print('')
-        print('Settlement in Clay Layers: ', self.w_c)
-        print('')
+                print(f'Sublayer {index+1}: OCNC Settlement Case')
+                self.w_c[index] = (layer_thickness/(1 + self.e0)) * (((Cr * (log10(self.preconsol_stress[index]/self.veoStress_clay[index]))) + ((Cc * (log10(self.vefStress_clay[index]/self.preconsol_stress[index]))))))
 
-        self.settlement = np.sum(self.w_c) + self.w_i
+        self.skempMu = (skempA + skempAlpha * (1-skempA))
+        self.w_c_3d = self.skempMu * self.w_c
+        self.settlement = np.sum(self.w_c_3d) + self.w_i
 
 
     def display_foundation(self):
@@ -173,7 +172,7 @@ class Foundation:
         print(f'e0: {self.e0}')
         print('')
 
-    def display_factors(self): # display the results
+    def display_factors_sand(self): # display the results
         print(f'Unit System: {self.unit_system}')
         print(f'Influence Depth: {self.influence_depth}')
         print(f'Layer Thickness Factor: {self.layer_thickness_factor}')
@@ -183,10 +182,28 @@ class Foundation:
         print(f'Preconsolidation Stress: {self.preconsol_stress}')
         print('')
 
+    def display_factors_clay(self):
+        print(f'Unit System: {self.unit_system}')
+        print(f'Influence Depth: {self.influence_depth}')
+        print(f'Initial Vertical Effective Stress: {self.veoStress_clay}')
+        print(f'Preconsolidation Stress: {self.preconsol_stress}')
+        print(f'Additional Vertical Effective Stress (via 2:1 Method): {self.two_to_one_delta}')
+        print(f'Final Vertical Effective Stress: {self.vefStress_clay}')
+        print(f'Settlement in Clay Layers (1D): {self.w_c}')
+        print(f"Skempton's μ: {self.skempMu}")
+        print('')
 
-    def display_results(self):
+    def display_results_sand(self):
         print(f'Unit System: {self.unit_system}')
         print(f'Stress considered: {self.load}')
         print(f'Settlement: {self.settlement}')
+        print('')
+
+    def display_results_clay(self):
+        print(f'Unit System: {self.unit_system}')
+        print(f'Stress considered: {self.load}')
+        print(f'Immediate Settlement: {self.w_i}')
+        print(f'Settlement in Clay Layers (3D): {self.w_c_3d}')
+        print(f'Immediate + SUM(3D): {self.settlement}')
         print('')
 
