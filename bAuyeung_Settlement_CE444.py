@@ -204,6 +204,7 @@ class Foundation:
         print(f'Stress considered: {self.load}')
         print(f'Immediate Settlement: {self.w_i}')
         print(f'Settlement in Clay Layers (3D): {self.w_c_3d}')
+        print(f'SUM(3D): {np.sum(self.w_c_3d)}')
         print(f'Immediate + SUM(3D): {self.settlement}')
         print('')
 
